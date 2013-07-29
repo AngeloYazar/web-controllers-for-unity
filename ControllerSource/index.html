@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset=utf-8 http-equiv="Content-Language" content="en"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-touch-fullscreen" content="yes" />
+<meta name="HandheldFriendly" content="true" />
+<link rel="apple-touch-icon" href="app-icon.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="app-icon.png" />
+<title>OUYA Controller</title>
+<style type="text/css">
+	.button {
+		width: 65px;
+		height: 80px;
+	}
+	#O {
+		position: absolute;
+		left: 330px;
+		top: 125px;
+	}
+	#Y {
+		position: absolute;
+		left: 330px;
+		top: 25px;
+	}
+	#A {
+		position: absolute;
+		left: 380px;
+		top: 75px;
+	}
+	#U {
+		position: absolute;
+		left: 280px;
+		top: 75px;
+	}
+	#DOWN {
+		position: absolute;
+		left: 50px;
+		top: 125px;
+	}
+	#UP {
+		position: absolute;
+		left: 50px;
+		top: 25px;
+	}
+	#RIGHT {
+		position: absolute;
+		left: 100px;
+		top: 75px;
+	}
+	#LEFT {
+		position: absolute;
+		left: 0px;
+		top: 75px;
+	}
+	#OUYA {
+		position: absolute;
+		left: 188px;
+		top: 150px;
+	}
+	#RELOAD {
+		position: absolute;
+		left: 188px;
+		top: 55px;
+	}
+	#status {
+		position: absolute;
+		left: 0px;
+		top: 25px;
+		width: 440px;
+		text-align: center;
+	}
+	body {
+		min-height: 900px;
+		background-color: rgb(71,71,71);
+		background-repeat: both;
+		width: 100%;
+	}
+	#container {
+		width: 455px;
+		position: relative;
+		margin: auto;
+	}
+</style>
+</head>
+
+<body ontouch="touch(event)" >
+<div id="container">
+	<div id="status">Not Connected</div>
+	<img id="O" class="button" ontouchend="release(event,'O')" ontouchstart="press(event,'O')" src="images/OUYA_O.png" />
+	<img id="U" class="button" ontouchend="release(event,'U')" ontouchstart="press(event,'U')" src="images/OUYA_U.png" />
+	<img id="Y" class="button" ontouchend="release(event,'Y')" ontouchstart="press(event,'Y')" src="images/OUYA_Y.png" />
+	<img id="A" class="button" ontouchend="release(event,'A')" ontouchstart="press(event,'A')" src="images/OUYA_A.png" />
+
+	<img id="DOWN"	class="button" ontouchend="release(event,'DOWN')" ontouchstart="press(event,'DOWN')" src="images/OUYA_DOWN.png" />
+	<img id="LEFT"	class="button" ontouchend="release(event,'LEFT')" ontouchstart="press(event,'LEFT')" src="images/OUYA_LEFT.png" />
+	<img id="UP"	class="button" ontouchend="release(event,'UP')" ontouchstart="press(event,'UP')" src="images/OUYA_UP.png" />
+	<img id="RIGHT"	class="button" ontouchend="release(event,'RIGHT')" ontouchstart="press(event,'RIGHT')" src="images/OUYA_RIGHT.png" />
+
+	<img id="OUYA" class="button" ontouchend="release(event,'OUYA')" ontouchstart="press(event,'OUYA')" src="images/OUYA_SYSTEM.png" />
+	<img id="RELOAD" class="button" onmousedown="reload()" src="images/OUYA_RELOAD.png" />
+</div>
+
+<script>
+//not used yet, but it might be good to pop up a message saying to switch to Safari.
+//var is_uiwebview = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(navigator.userAgent);
+
+if( !window.navigator.standalone ) {
+	function hideAddressBar() {
+	  if(!window.location.hash) {
+	      if(document.height < window.outerHeight) {
+	          document.body.style.height = (window.outerHeight + 50) + 'px';
+	      }	 
+	      setTimeout( function(){ window.scrollTo(0, 1); }, 50 );
+	  }
+	}
+	window.addEventListener("load", function(){ if(!window.pageYOffset){ hideAddressBar(); } } );
+	window.addEventListener("orientationchange", hideAddressBar );
+}
+document.ontouchmove = function(event) {
+    event.preventDefault();
+}
+
+var pos = 0;
+
+function get_appropriate_ws_url() {
+	var u = document.URL;
+	var q = u.indexOf('?')+1;
+	var h = u.indexOf('+');
+	var ip = '192.168.1.131';
+	if(q > 0) {
+		if( h < 0 ) {
+			ip = u.substring(q);
+		}
+		else {
+			ip = u.substring(q,h);
+		}
+	}
+
+	if (u.substring(0, 5) == "https") {
+		return "wss://"+ip+":8080";
+	} else {
+		return "ws://"+ip+":8080";
+	}
+}
+
+var web_socket;
+
+if (window.MozWebSocket) {
+	web_socket = new MozWebSocket(get_appropriate_ws_url(), "ouya");
+} else {
+	web_socket = new WebSocket(get_appropriate_ws_url(), "ouya");
+}
+
+try {
+	web_socket.onopen = function() {
+		document.getElementById("status").textContent = "opened\n";
+	} 
+
+	web_socket.onmessage =function got_packet(msg) {
+		document.getElementById("status").textContent = msg.data + "\n";
+	} 
+
+	web_socket.onclose = function(){
+		document.getElementById("status").textContent = "closed\n";
+	}
+} catch(exception) {
+	document.getElementById("status").textContent = exception + "";
+}
+
+function press(event,value) {
+	event.preventDefault();
+	web_socket.send("p"+value);
+	if(window.navigator.vibrate) {
+		 window.navigator.vibrate(10);
+	}
+}
+function release(event,value) {
+	event.preventDefault();
+	web_socket.send("r"+value);
+}
+
+function touch(event) {
+	event.preventDefault();
+}
+
+function reload() {
+	var u = document.URL;
+	var h = u.indexOf('+');
+	if( h == -1 ) {
+		window.location = u + "+" + Math.random();
+	}
+	else {
+		window.location = u.substring(0,h) + "+" + Math.random();;
+	}
+}
+</script>
+
+</body>
+</html>
