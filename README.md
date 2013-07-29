@@ -14,7 +14,11 @@ The goal is to enable OUYA games to support a large number of players, without t
 Currently it only supports mobile safari, version 6.0 and above. This is because the websocket server it uses only supports [RFC 6455](http://tools.ietf.org/html/rfc6455)
 
 Resources used in the project:
-For Websockets: https://github.com/sta/websocket-sharp
-For QRCodes: http://zxingnet.codeplex.com/
-For the JS/HTML example: https://github.com/lipp/lua-websockets
-Images for the OUYA buttons from the docs: https://devs.ouya.tv/developers/docs/interface-guidelines
+- For Websockets: https://github.com/sta/websocket-sharp
+- For QRCodes: http://zxingnet.codeplex.com/
+- For the JS/HTML example: https://github.com/lipp/lua-websockets
+- Images for the OUYA buttons from the docs: https://devs.ouya.tv/developers/docs/interface-guidelines
+
+
+![alt text](http://www.yazarmediagroup.com/ouya/images/web-controllers-for-unity.png "Screenshot")
+In this screenshot, the colored cubes are the 'players' displaying the last input they got from the controller.
